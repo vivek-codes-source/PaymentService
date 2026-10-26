@@ -1,232 +1,131 @@
+# Payment Service
 
-# PaymentService — Spring Boot + Razorpay + Stripe
+A Java-based payment service designed to demonstrate **Low-Level Design (LLD), object-oriented programming, and design patterns** through a modular and extensible payment processing workflow.
 
-A Spring Boot payment microservice built using Java 17, Spring Boot 3.4.5, Razorpay, Stripe, and the Strategy Design Pattern.
+## Overview
 
-The application supports initiating payments through multiple payment gateways using a common interface.
+The Payment Service project explores how payment processing logic can be organized using clean abstractions and well-defined responsibilities.
 
-## Features
-
-- Razorpay order creation
-- Stripe Checkout session creation
-- Strategy Design Pattern for gateway selection
-- Spring Boot REST API
-- Environment-based API credentials
-- Request validation and exception handling
-- Separate controller, service, DTO, configuration, and payment gateway packages
+The design separates payment initiation, gateway interaction, and payment processing decisions, making it easier to extend the system with different payment providers without tightly coupling business logic to a specific implementation.
 
 ## Tech Stack
 
-- Java 17
-- Spring Boot 3.4.5
-- Maven
-- Razorpay Java SDK
-- Stripe Java SDK
-- REST APIs
+- **Language:** Java
+- **Framework:** Spring Boot, if configured
+- **Build Tool:** Maven
+- **Design Principles:** SOLID, separation of concerns
+- **Design Patterns:** Strategy Pattern
+
+## Key Features
+
+- Modular payment processing design.
+- Payment gateway abstraction.
+- Strategy-based selection of payment processing behavior.
+- Separation of controller, service, and gateway responsibilities.
+- Extensible architecture for adding new payment methods or providers.
+
+## Architecture
+
+```text
+Client
+  |
+  v
+PaymentController
+  |
+  v
+PaymentService
+  |
+  v
+PaymentGateway Strategy Selector
+  |
+  +--------------------+
+  |                    |
+  v                    v
+Payment Gateway A   Payment Gateway B
+  |                    |
+  +---------+----------+
+            |
+            v
+     Payment Response
+```
+
+*Illustrative architecture; update the diagram to match the actual implementation.*
+
+## Design Patterns
+
+### 1. Strategy Pattern
+
+The Strategy Pattern encapsulates different payment processing algorithms behind a common interface.
+
+Each payment gateway can implement the same contract, allowing the application to select the appropriate implementation without embedding provider-specific logic throughout the codebase.
+
+**Benefits:**
+- Reduces tight coupling.
+- Improves extensibility.
+- Supports the Open/Closed Principle.
+- Makes individual payment strategies easier to test.
+
+### 2. Separation of Concerns
+
+The design separates request handling, payment orchestration, gateway abstraction, and payment processing behavior into distinct components.
+
+This makes the code easier to maintain and extend.
 
 ## Project Structure
 
 ```text
-src/main/java/com/example/PaymentService/
-├── config/
-│   └── RazorpayConfig.java
-├── controllers/
-│   ├── PaymentController.java
-│   └── GlobalExceptionHandler.java
-├── dtos/
-│   ├── InitiatePaymentDto.java
-│   └── InitiatePaymentResponseDto.java
-├── paymentgateway/
-│   ├── PaymentGateway.java
-│   ├── PaymentGatewayStrategyChooser.java
-│   ├── RazorpayPaymentGateway.java
-│   └── StripePaymentGateway.java
-├── services/
-│   └── PaymentService.java
-└── PaymentServiceApplication.java
+PaymentService/
+├── src/
+│   └── main/
+│       └── java/
+│           └── ...
+├── pom.xml
+└── README.md
 ```
 
-## Prerequisites
+*Replace the abbreviated structure with your actual package and class names.*
 
-- Java 17 or later
+## Getting Started
+
+### Prerequisites
+
+- Java JDK 17 or the version configured by the project
 - Maven
-- Razorpay test account
-- Stripe test account
+- IntelliJ IDEA or another Java IDE
 
-## Configuration
-
-Configure the following environment variables before initiating payments.
+### Clone the Repository
 
 ```bash
-export RAZORPAY_KEY_ID=rzp_test_your_key_id
-export RAZORPAY_KEY_SECRET=your_razorpay_test_secret
-export STRIPE_SECRET_KEY=sk_test_your_stripe_secret
+git clone https://github.com/vivek-codes-source/PaymentService.git
+cd PaymentService
 ```
 
-Replace the example values with your actual test credentials.
-
-Never commit API secrets to GitHub.
-
-## Run the Application
-
-Clone or download the project and navigate to its root directory.
-
-Build the project:
+### Build the Project
 
 ```bash
 mvn clean package
 ```
 
-Run the application:
+### Run the Application
+
+For a Spring Boot application:
 
 ```bash
 mvn spring-boot:run
 ```
 
-Default server port: `8082`
+If this is a standalone Java LLD project, run the main class specified in the source code instead.
 
-## API Endpoints
+## Example Payment Flow
 
-### 1. Initiate a Razorpay Payment
+1. A client initiates a payment request.
+2. The controller forwards the request to the payment service.
+3. The service identifies the appropriate payment strategy.
+4. The selected gateway implementation processes the request.
+5. The service returns the payment result to the caller.
 
-**Endpoint**
+## Future Enhancements
 
-```http
-POST /api/payments/initiate
-```
-
-**Request**
-
-```json
-{
-  "amount": 499.00,
-  "currency": "INR",
-  "gateway": "RAZORPAY",
-  "receipt": "order_1001"
-}
-```
-
-**cURL**
-
-```bash
-curl -X POST http://localhost:8082/api/payments/initiate \
-  -H "Content-Type: application/json" \
-  -d '{"amount":499.00,"currency":"INR","gateway":"RAZORPAY","receipt":"order_1001"}'
-```
-
-The API creates a Razorpay order and returns its order ID.
-
-The frontend can use the order ID with Razorpay Checkout to let the customer complete payment.
-
-Creating an order does not mean the payment has been completed.
-
-### 2. Initiate a Stripe Checkout Session
-
-**Endpoint**
-
-```http
-POST /api/payments/initiate
-```
-
-**Request**
-
-```json
-{
-  "amount": 19.99,
-  "currency": "USD",
-  "gateway": "STRIPE",
-  "receipt": "Order 1002",
-  "successUrl": "https://example.com/payment/success?session_id={CHECKOUT_SESSION_ID}",
-  "cancelUrl": "https://example.com/payment/cancel"
-}
-```
-
-**cURL**
-
-```bash
-curl -X POST http://localhost:8082/api/payments/initiate \
-  -H "Content-Type: application/json" \
-  -d '{"amount":19.99,"currency":"USD","gateway":"STRIPE","receipt":"Order 1002","successUrl":"https://example.com/payment/success?session_id={CHECKOUT_SESSION_ID}","cancelUrl":"https://example.com/payment/cancel"}'
-```
-
-The API creates a Stripe Checkout session and returns a checkout URL.
-
-Open the returned URL in a browser to continue the checkout process.
-
-## Strategy Design Pattern
-
-The application uses the Strategy Design Pattern to keep payment gateway implementations separate.
-
-### PaymentGateway
-
-Defines the common interface implemented by supported payment gateways.
-
-### RazorpayPaymentGateway
-
-Implements Razorpay-specific order creation logic.
-
-### StripePaymentGateway
-
-Implements Stripe-specific Checkout session creation logic.
-
-### PaymentGatewayStrategyChooser
-
-Selects the appropriate payment gateway based on the requested gateway type.
-
-### PaymentService
-
-Coordinates the payment initiation workflow.
-
-### PaymentController
-
-Exposes the REST API to clients.
-
-**Benefits**
-
-- Loose coupling between business logic and payment providers
-- Easier addition of new payment gateways
-- Better separation of concerns
-- Easier unit testing and maintenance
-
-## Payment Flow
-
-1. The client sends a payment initiation request.
-2. PaymentController receives and validates the request.
-3. PaymentService invokes PaymentGatewayStrategyChooser.
-4. The chooser selects Razorpay or Stripe.
-5. The selected gateway creates an order or Checkout session.
-6. The API returns the result to the client.
-
-## Security Considerations
-
-Before using this service in production:
-
-- Verify Razorpay payment signatures on the backend.
-- Verify webhook signatures before trusting payment status.
-- Verify Stripe webhook signatures using the raw request body and endpoint signing secret.
-- Do not trust a success redirect alone as proof of payment.
-- Store credentials in environment variables or a secrets manager.
-- Add authentication and authorization.
-- Persist payment and order details in a database.
-- Implement idempotency to prevent duplicate payment operations.
-- Validate amounts and ensure users can only pay for their own orders.
-- Use HTTPS in production.
-
-## Important Notes
-
-- Use test credentials during development.
-- Amounts are provided in major currency units, such as rupees or dollars, and converted into minor units such as paise or cents by the implementation.
-- Currency conversion must account for currencies with zero or three decimal places if those currencies are supported.
-- Payment initiation is different from payment confirmation. Use verified webhooks or server-side verification to determine the final payment status.
-
-## Future Improvements
-
-- Payment status API
-- Database persistence using MySQL
-- Razorpay and Stripe webhook handlers
-- Idempotency support
-- Unit and integration tests
-- Docker containerization
-- CI/CD using Jenkins
-- Authentication and authorization
-
+- Integrate a persistent database for payment records.
+- Add payment status tracking.
+- Introduce request validation
